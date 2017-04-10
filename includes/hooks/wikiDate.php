@@ -1,8 +1,4 @@
-<?php /* ------------------------------------------------------------
--																	-
-- WHMCS Time Ago ( Client Date ) By Milad Maldar ( www.ltiny.ir )	-
--																	-
------------------------------------------------------------------- */
+<?php
 
 function wikiDateConfig() {
 	$date_tooltip = true;	// true : Enable Show Date in Tooltip 		- 	false : Disable Show Date in Tooltip
@@ -10,7 +6,6 @@ function wikiDateConfig() {
 	
 	return array('date_tooltip' => $date_tooltip, 'persian_date' => $persian_date);
 }
-
 function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asia/Tehran', $wikiNumber = 'en')
 {
     $T_sec = 0;
@@ -19,10 +14,23 @@ function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asi
         date_default_timezone_set(($time_zone == '') ? 'Asia/Tehran' : $time_zone);
     $ts   = $T_sec + (($timestamp == '' or $timestamp == 'now') ? time() : wikiNumber($timestamp));
     $date = explode('_', date('H_i_j_n_O_P_s_w_Y', $ts));
+
+
     list($j_y, $j_m, $j_d) = WikiGregorianToPersianDate($date[8], $date[3], $date[2]);
+	
+
+	$year =  $j_y;
+	$month =  $j_m;
+	$day =  $j_d;
+	
     $doy = ($j_m < 7) ? (($j_m - 1) * 31) + $j_d - 1 : (($j_m - 7) * 30) + $j_d + 185;
     $kab = ($j_y % 33 % 4 - 1 == (int) ($j_y % 33 * .05)) ? 1 : 0;
     $sl  = strlen($format);
+	
+	
+
+	
+	
     $out = '';
     for ($i = 0; $i < $sl; $i++) {
         $sub = substr($format, $i, 1);
@@ -72,7 +80,7 @@ function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asi
                 break;
             
             case 'd':
-                $out .= ($j_d < 10) ? '0' . $j_d : $j_d;
+                $out .= ($day < 10) ? '0' . $day : $day;
                 break;
             
             case 'D':
@@ -130,7 +138,7 @@ function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asi
                 break;
             
             case 'm':
-                $out .= ($j_m > 9) ? $j_m : '0' . $j_m;
+                $out .= ($month > 9) ? $month : '0' . $month;
                 break;
             
             case 'M':
@@ -238,7 +246,7 @@ function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asi
                 break;
             
             case 'Y':
-                $out .= $j_y;
+                $out .= $year;
                 break;
             
             case 'z':
@@ -249,9 +257,9 @@ function wikiPersianDate($format, $timestamp = '', $none = '', $time_zone = 'Asi
                 $out .= $sub;
         }
     }
+
     return ($wikiNumber != 'en') ? wikiNumber($out, 'fa', '.') : $out;
 }
-
 function WikiGregorianToPersianDate($gy, $gm, $gd, $mod = '')
 {
     list($gy, $gm, $gd) = explode('_', wikiNumber($gy . '_' . $gm . '_' . $gd));
@@ -276,7 +284,6 @@ function WikiGregorianToPersianDate($gy, $gm, $gd, $mod = '')
         $jd
     ) : $jy . $mod . $jm . $mod . $jd;
 }
-
 function wikiPersianDateWords($array, $mod = '')
 {
     foreach ($array as $type => $num) {
@@ -348,23 +355,26 @@ function wikiPersianDateWords($array, $mod = '')
     }
     return ($mod == '') ? $array : implode($mod, $array);
 }
-
 function wikiNumber($str, $mod = 'en', $mf = '٫')
 {
     $num_a = array('0','1','2','3','4','5','6','7','8','9','.');
     $key_a = array('۰','۱','۲','۳','۴','۵','۶','۷','۸','۹',$mf);
     return ($mod == 'fa') ? str_replace($num_a, $key_a, $str) : str_replace($key_a, $num_a, $str);
 }
-
 function wikiDate($format, $time) {
-
-	$wikiDateConfig 	= wikiDateConfig();
 	
-	$now 		= time();
+	
+	$wikiDateConfig 	= wikiDateConfig();
+	$now 		= strtotime(date(str_replace('/', '-',$format)));
+	$time		= strtotime(str_replace('/', '-',$time));
+	
 	$timestamp 	= ($now < $time) ? ($time - $now) : ($now - $time);
+
+	if($timestamp == 0)
+		return 'امروز';
 	
 	if($timestamp < 1)
-		return false;
+		return;
 	
 	if ($now < $time) {
 		$tense = "دیگر";
@@ -373,7 +383,7 @@ function wikiDate($format, $time) {
 		$tense = "پیش";
 		$values = array(12*30*24*60*60 => 'سال', 30*24*60*60 => 'ماه', 24*60*60*7 => 'هفته', 24*60*60 => 'روز', 60*60 => 'ساعت', 60 => 'دقیقه', 1 => 'ثانیه');
 	}
-
+	
 	foreach($values as $secs=>$point) {
 		$res = $timestamp / $secs;
 		
@@ -392,58 +402,110 @@ function wikiDate($format, $time) {
 	}
 }
 
+
+
+
+function findPt($data) {
+	
+	if( preg_match("/\d{4}(\/|-)\d{2}(\/|-)\d{2}/", $data, $output_array) ) return "Y/m/d";
+	if( preg_match("/\d{4}(\/|-)\d{2}(\/|-)\d{2} (\d*):(\d*)/", $data, $output_array) ) return "Y/m/d H:i";
+	if( preg_match("/\d{4}(\/|-)\d{2}(\/|-)\d{2} (\d*):(\d*):(\d*)/", $data, $output_array) ) return "Y/m/d H:i:s";
+	if( preg_match("/\d{4}(\/|-)\d{2}(\/|-)\d{2}/", $data, $output_array) ) return "d/m/Y";
+	if( preg_match("/\d{2}(\/|-)\d{2}(\/|-)\d{4} (\d*):(\d*)/", $data, $output_array) ) return "d/m/Y H:i";
+	if( preg_match("/\d{2}(\/|-)\d{2}(\/|-)\d{4} (\d*):(\d*):(\d*)/", $data, $output_array) ) return "d/m/Y H:i:s";	
+	if( preg_match("/(\d*):(\d*):(\d*) \d{4}(\/|-)\d{2}(\/|-)\d{2}/", $data, $output_array) ) return "H:i:s Y/m/d";
+	if( preg_match("/(\d*):(\d*):(\d*) \d{2}(\/|-)\d{2}(\/|-)\d{4}/", $data, $output_array) ) return "H:i:s d/m/Y";
+	if( preg_match("/(\d*):(\d*) \d{4}(\/|-)\d{2}(\/|-)\d{2}/", $data, $output_array) ) return "H:i Y/m/d";
+	if( preg_match("/(\d*):(\d*) \d{2}(\/|-)\d{2}(\/|-)\d{4}/", $data, $output_array) ) return "H:i d/m/Y";		
+	if( preg_match("/^(\d*):(\d*)/", $data, $output_array) ) return "H:i";
+	if( preg_match("/^(\d*):(\d*):(\d*)/", $data, $output_array) ) return "H:i:s";
+}
+
+
+
+
+
+
 add_hook('ClientAreaPage', 1, function($wikiDateReplace) {
-
     $wikiDateReplace['wikiDate'] = TRUE;
-
+	
+	
+	
     foreach ($wikiDateReplace['domains'] as &$domains) {
-        $domains['registrationdate'] = wikiDate("Y/m/d", strtotime($domains['normalisedRegistrationDate']));		
+        $domains['registrationdate'] = wikiDate(findPt($domains['registrationdate']), $domains['registrationdate']) . '</br>' . wikiPersianDate(findPt($domains['registrationdate']), strtotime(str_replace('/', '-',$domains['registrationdate'])));		
 		if ($domains['nextduedate'] != '-') {
-			$domains['nextduedate'] = wikiDate("Y/m/d", strtotime($domains['normalisedNextDueDate']));
+			$domains['nextduedate'] = wikiDate(findPt($domains['nextduedate']), $domains['nextduedate']) . '</br>' . wikiPersianDate(findPt($domains['nextduedate']), strtotime(str_replace('/', '-',$domains['nextduedate'])));	
 		}
-        $domains['expirydate'] = wikiDate("Y/m/d", strtotime($domains['normalisedExpiryDate']));
-    }
-
-    foreach ($wikiDateReplace['services'] as &$services) {
-        $services['regdate'] = wikiDate("Y/m/d", strtotime($services['normalisedRegDate']));
-		if ($services['nextduedate'] != '-') {
-			$services['nextduedate'] = wikiDate("Y/m/d", strtotime($services['normalisedNextDueDate']));
-		}
-    }
-
-    foreach ($wikiDateReplace['tickets'] as &$tickets) {
-        $tickets['date'] 		= wikiDate("Y/m/d H:i", strtotime($tickets['normalisedDate']));
-        $tickets['lastreply'] 	= wikiDate("Y/m/d H:i", strtotime($tickets['normalisedLastReply']));
-    }
-
-    foreach ($wikiDateReplace['replies'] as &$replies) {
-        $replies['date'] 		= wikiDate("Y/m/d", strtotime($replies['date']));
-    }
-
-    foreach ($wikiDateReplace['ascreplies'] as &$ascreplies) {
-        $ascreplies['date'] 	= wikiDate("Y/m/d", strtotime($ascreplies['date']));
-    }
-
-    foreach ($wikiDateReplace['descreplies'] as &$descreplies) {
-        $descreplies['date'] 	= wikiDate("Y/m/d", strtotime($descreplies['date']));
-    }
-
-    foreach ($wikiDateReplace['invoices'] as &$invoices) {
-        $invoices['datecreated'] = wikiDate("Y/m/d", strtotime($invoices['normalisedDateCreated']));
-        $invoices['datedue'] 	= wikiDate("Y/m/d", strtotime($invoices['normalisedDateDue']));
-    }
-    
-    if ($wikiDateReplace['date']) {
-        $wikiDateReplace['jfulldate'] = wikiDate("l ، j F Y", strtotime($wikiDateReplace['date']));
+        $domains['expirydate'] = wikiDate(findPt($domains['expirydate']), $domains['expirydate']) . '</br>' . wikiPersianDate(findPt($domains['expirydate']), strtotime(str_replace('/', '-',$domains['expirydate'])));	;
     }
 	
+	
+	
+    foreach ($wikiDateReplace['services'] as &$services) {
+        $services['regdate'] = wikiDate(findPt($services['normalisedRegDate']), $services['normalisedRegDate']);
+		if ($services['nextduedate'] != '-') {
+			$services['nextduedate'] =  wikiDate(findPt($services['normalisedNextDueDate']), $services['normalisedNextDueDate']) . '</br>' . wikiPersianDate(findPt($services['normalisedNextDueDate']), strtotime($services['normalisedNextDueDate']));
+		}
+    }
+	
+
+    foreach ($wikiDateReplace['tickets'] as &$tickets) {
+	
+		$date2 = $tickets['date'];
+		$date3 = $tickets['lastreply'];
+
+        $tickets['date'] 		= wikiDate(findPt($tickets['date']), $tickets['date']) . '</br>' . wikiPersianDate(findPt($date2), strtotime(str_replace('/', '-',$date2)));
+
+        $tickets['lastreply'] 	= wikiDate(findPt($tickets['lastreply']), $tickets['lastreply']) . '</br>' . wikiPersianDate(findPt($date3), strtotime(str_replace('/', '-',$date3)));
+    }
+	
+
+	
+    foreach ($wikiDateReplace['replies'] as &$replies) {
+        $replies['date'] 		= wikiDate(findPt($replies['date']), $replies['date']);
+    }
+    foreach ($wikiDateReplace['ascreplies'] as &$ascreplies) {
+        $ascreplies['date'] 	= wikiDate(findPt($ascreplies['date']), $ascreplies['date']);
+    }
+    foreach ($wikiDateReplace['descreplies'] as &$descreplies) {
+        $descreplies['date'] 	= wikiDate(findPt($descreplies['date']), $descreplies['date']);
+    }
+	
+	
+	
+	
+	
+    foreach ($wikiDateReplace['invoices'] as &$invoices) {
+		
+		if( $invoices['normalisedDateCreated'] !== "0000-00-00" && $invoices['normalisedDateCreated'] !== "00-00-0000" )
+        $invoices['datecreated'] = wikiDate(findPt($invoices['normalisedDateCreated']), $invoices['normalisedDateCreated']) . '</br>' . wikiPersianDate(findPt($invoices['normalisedDateCreated']), strtotime(str_replace('/', '-',$invoices['normalisedDateCreated'])));
+
+        $invoices['datedue'] 	= wikiDate(findPt($invoices['normalisedDateDue']), $invoices['normalisedDateDue']) . '</br>' . wikiPersianDate(findPt($invoices['normalisedDateDue']), strtotime(str_replace('/', '-',$invoices['normalisedDateDue'])));
+    }
+	
+	
+	
+	
+    
+    if ($wikiDateReplace['date']) {
+        $wikiDateReplace['jfulldate'] = wikiDate("l ، j F Y", $wikiDateReplace['date']);
+    }
+	
+
     if (strpos($_SERVER['REQUEST_URI'],'viewinvoice') === false) {
 		$datefields = array('registrationdate','nextduedate','expirydate','regdate','lastupdate','date','duedate','datepaid','datecreated','datedue');
 		foreach ($datefields as $datefield) {
-			if ($wikiDateReplace[$datefield])
-				$wikiDateReplace[$datefield] = wikiDate("Y/m/d", strtotime($wikiDateReplace[$datefield]));
+			if ($wikiDateReplace[$datefield] ) {
+				
+				if( strstr($wikiDateReplace[$datefield], ':') )
+					$wikiDateReplace[$datefield] = wikiDate(findPt($wikiDateReplace[$datefield]), $wikiDateReplace[$datefield]);
+				else
+				$wikiDateReplace[$datefield] = wikiDate(findPt($wikiDateReplace[$datefield]), $wikiDateReplace[$datefield]) . '</br>' . wikiPersianDate(findPt($wikiDateReplace[$datefield]), strtotime(str_replace('/', '-',$wikiDateReplace[$datefield])));
+				
+			}	
 		}
     }
     
     return $wikiDateReplace;
 });
+
